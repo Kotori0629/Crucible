@@ -1,5 +1,3 @@
-import net.minecraftforge.gradle.delayed.DelayedFile;
-
 buildscript {
     repositories {
         mavenCentral()
