@@ -22,6 +22,7 @@ Advantages over Thermos:
 
 Advantages with other Crucible:
 + Use CatServerRemapper, Enhanced plugin compatibility
++ Fixed Windows terminal handle ANSI color
 
 ## Build Requirements
 * Java 8 JDK
