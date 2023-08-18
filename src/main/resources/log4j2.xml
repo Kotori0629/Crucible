@@ -17,6 +17,14 @@
                 <OnStartupTriggeringPolicy/>
             </Policies>
         </RollingRandomAccessFile>
+        <RollingRandomAccessFile name="DebugFile" fileName="logs/debug.log" filePattern="logs/debug-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5" fileIndex="min"/>
+        </RollingRandomAccessFile>
         <Routing name="FmlFile">
             <Routes pattern="$${ctx:side}">
                 <Route>
@@ -36,6 +44,11 @@
                 </Route>
             </Routes>
         </Routing>
+        <Async name="AsyncFile">
+            <AppenderRef ref="File" level="info"/>
+            <AppenderRef ref="DebugFile"/>
+            <AppenderRef ref="FmlFile"/>
+        </Async>
     </Appenders>
     <Loggers>
         <!-- Redirect all logging from FML to fml log files -->
@@ -56,9 +69,7 @@
         <Root level="all">
             <AppenderRef ref="FmlSysOut" level="INFO" />
             <AppenderRef ref="TerminalConsole" level="INFO"/>
-            <AppenderRef ref="File" level="INFO"/>
-            <!-- Set FmlFile to TRACE/DEBUG if you require more logging -->
-            <AppenderRef ref="FmlFile" level="INFO"/>
+            <AppenderRef ref="AsyncFile"/>
         </Root>
     </Loggers>
 </Configuration>
