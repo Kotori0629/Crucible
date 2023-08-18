@@ -2,6 +2,7 @@ package org.bukkit.craftbukkit.v1_7_R4.command;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.network.rcon.RConConsoleSource;
 import org.bukkit.Server;
 import org.bukkit.command.*;
 import org.bukkit.craftbukkit.v1_7_R4.entity.CraftPlayer;
@@ -41,8 +42,13 @@ public class CraftSimpleCommandMap extends SimpleCommandMap {
                 if (!target.testPermission(sender)) return true;
                 if (sender instanceof ConsoleCommandSender) {
                     FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(this.vanillaConsoleSender, commandLine);
-                } else
+                    // CauldronX start - fix RemoteConsoleSender execute command ClassCastException
+                } else if (sender instanceof RemoteConsoleCommandSender) {
+                    FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(RConConsoleSource.instance, commandLine);
+                    // CauldronX end
+                } else {
                     FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(((CraftPlayer) sender).getHandle(), commandLine);
+                }
             } else {
                 // Cauldron end
                 // Note: we don't return the result of target.execute as thats success / failure, we return handled (true) or not handled (false)
