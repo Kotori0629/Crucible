@@ -504,12 +504,12 @@
 +                {
 +                	al = AffinityLock.acquireCore();
 +                	if(al.isAllocated())
-+                		logger.log(org.apache.logging.log4j.Level.INFO, "[Thermos] We're locked in! " + AffinityLock.dumpLocks());
-+                	else logger.log(org.apache.logging.log4j.Level.WARN, "[Thermos] Couldn't bind to a CPU core!");
++                		logger.log(org.apache.logging.log4j.Level.INFO, "We're locked in! " + AffinityLock.dumpLocks());
++                	else logger.log(org.apache.logging.log4j.Level.WARN, "Couldn't bind to a CPU core!");
 +                }
 +                else
 +                {
-+                	logger.log(org.apache.logging.log4j.Level.INFO, "[Thermos] Refusing to lock affinity, disabled in Crucible.yml");
++                	logger.log(org.apache.logging.log4j.Level.INFO, "Refusing to lock affinity, disabled in Crucible.yml");
 +                }
 +                try {
 +                    serverStarted = true; //Crucible
@@ -614,19 +614,7 @@
                  FMLCommonHandler.instance().handleServerStopped();
                  this.serverStopped = true;
                  this.systemExitNow();
-@@ -497,6 +784,11 @@
-     {
-         File file1 = this.getFile("server-icon.png");
- 
-+        if (!file1.isFile())
-+        {
-+        	System.out.println("Hey, you don't have a server icon! Try out one of Thermos' Icon Generators at https://github.com/CyberdyneCC/ThermosIconGenerators !");
-+        }
-+
-         if (file1.isFile())
-         {
-             ByteBuf bytebuf = Unpooled.buffer();
-@@ -532,8 +824,14 @@
+@@ -532,8 +819,14 @@
  
      public void tick()
      {
@@ -641,7 +629,7 @@
          ++this.tickCounter;
  
          if (this.startProfiling)
-@@ -562,11 +860,18 @@
+@@ -562,11 +855,18 @@
              this.field_147147_p.func_151318_b().func_151330_a(agameprofile);
          }
  
@@ -662,7 +650,7 @@
              this.theProfiler.endSection();
          }
  
-@@ -575,25 +880,58 @@
+@@ -575,25 +875,58 @@
          this.theProfiler.endSection();
          this.theProfiler.startSection("snooper");
  
@@ -723,7 +711,7 @@
          int i;
  
          Integer[] ids = DimensionManager.getIDs(this.tickCounter % 200 == 0);
-@@ -602,19 +940,21 @@
+@@ -602,19 +935,21 @@
              int id = ids[x];
              long j = System.nanoTime();
  
@@ -748,7 +736,7 @@
  
                  this.theProfiler.startSection("tick");
                  FMLCommonHandler.instance().onPreWorldTick(worldserver);
-@@ -622,22 +962,46 @@
+@@ -622,22 +957,46 @@
  
                  try
                  {
@@ -797,7 +785,7 @@
                      worldserver.addWorldInfoToCrashReport(crashreport);
                      throw new ReportedException(crashreport);
                  }
-@@ -645,10 +1009,12 @@
+@@ -645,10 +1004,12 @@
                  FMLCommonHandler.instance().onPostWorldTick(worldserver);
                  this.theProfiler.endSection();
                  this.theProfiler.startSection("tracker");
@@ -811,7 +799,7 @@
  
              worldTickTimes.get(id)[this.tickCounter % 100] = System.nanoTime() - j;
          }
-@@ -656,15 +1022,21 @@
+@@ -656,15 +1017,21 @@
          this.theProfiler.endStartSection("dim_unloading");
          DimensionManager.unloadWorlds(worldTickTimes);
          this.theProfiler.endStartSection("connection");
@@ -833,7 +821,7 @@
  
          this.theProfiler.endSection();
      }
-@@ -699,6 +1071,13 @@
+@@ -699,6 +1066,13 @@
  
      public WorldServer worldServerForDimension(int p_71218_1_)
      {
@@ -847,7 +835,7 @@
          WorldServer ret = DimensionManager.getWorld(p_71218_1_);
          if (ret == null)
          {
-@@ -784,13 +1163,14 @@
+@@ -784,13 +1158,14 @@
  
      public List getPossibleCompletions(ICommandSender p_71248_1_, String p_71248_2_)
      {
@@ -866,7 +854,7 @@
  
              if (list != null)
              {
-@@ -798,40 +1178,25 @@
+@@ -798,40 +1173,25 @@
  
                  while (iterator.hasNext())
                  {
@@ -915,7 +903,7 @@
      }
  
      public static MinecraftServer getServer()
-@@ -1034,7 +1399,7 @@
+@@ -1034,7 +1394,7 @@
  
      public boolean isServerInOnlineMode()
      {
@@ -924,7 +912,7 @@
      }
  
      public void setOnlineMode(boolean p_71229_1_)
-@@ -1124,7 +1489,7 @@
+@@ -1124,7 +1484,7 @@
  
      public NetworkSystem func_147137_ag()
      {
@@ -933,7 +921,7 @@
      }
  
      @SideOnly(Side.CLIENT)
-@@ -1257,10 +1622,14 @@
+@@ -1257,10 +1617,14 @@
      @SideOnly(Side.SERVER)
      public static void main(String[] p_main_0_)
      {
@@ -948,7 +936,7 @@
              boolean flag = true;
              String s = null;
              String s1 = ".";
-@@ -1356,16 +1725,34 @@
+@@ -1356,16 +1720,34 @@
              {
                  dedicatedserver.setGuiEnabled();
              }
@@ -989,7 +977,7 @@
          }
          catch (Exception exception)
          {
-@@ -1400,15 +1787,70 @@
+@@ -1400,15 +1782,70 @@
      @SideOnly(Side.SERVER)
      public String getPlugins()
      {
@@ -1065,7 +1053,7 @@
      }
  
      @SideOnly(Side.SERVER)
-@@ -1455,9 +1897,213 @@
+@@ -1455,9 +1892,213 @@
          return this.serverStopped;
      }
  
