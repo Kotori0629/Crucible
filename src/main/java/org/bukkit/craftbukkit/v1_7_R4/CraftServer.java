@@ -1,5 +1,6 @@
 package org.bukkit.craftbukkit.v1_7_R4;
 
+import catserver.server.remapper.ReflectionTransformer;
 import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebean.config.dbplatform.SQLitePlatform;
@@ -305,6 +306,7 @@ public final class CraftServer implements Server {
     }
 
     public void loadPlugins() {
+        ReflectionTransformer.init(); // CatServer
         pluginManager.registerInterface(JavaPluginLoader.class);
 
         File pluginFolder = (File) MinecraftServer.options.valueOf("plugins");
