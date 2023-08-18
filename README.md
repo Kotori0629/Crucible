@@ -23,6 +23,7 @@ Advantages over Thermos:
 Advantages with other Crucible:
 + Use CatServerRemapper, Enhanced plugin compatibility
 + Fixed Windows terminal handle ANSI color
++ Support [UraniumPlus](https://github.com/UraniumMC/UraniumPlus)! Now, You can use `/title` command in MC1.7.10
 
 ## Build Requirements
 * Java 8 JDK

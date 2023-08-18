@@ -1,0 +1,13 @@
+--- ../src-base/minecraft/net/minecraft/util/StringTranslate.java
++++ ../src-work/minecraft/net/minecraft/util/StringTranslate.java
+@@ -31,6 +31,10 @@
+         InputStream inputstream = StringTranslate.class.getResourceAsStream("/assets/minecraft/lang/en_US.lang");
+         languageList = Maps.newHashMap();
+         inject(this, inputstream);
++        // CauldronX start - support UraniumPlus
++        inputstream = StringTranslate.class.getResourceAsStream("/assets/uraniumplus/lang/en_US.lang");
++        inject(this, inputstream);
++        // CauldronX end
+     }
+ 
+     public static void inject(InputStream inputstream)

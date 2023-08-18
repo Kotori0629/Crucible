@@ -394,6 +394,9 @@ public final class CraftServer implements Server {
         commandMap.register("minecraft", new VanillaCommandWrapper(new net.minecraft.command.server.CommandTeleport(), "/tp [player] <target>\n/tp [player] <x> <y> <z>"));
         commandMap.register("minecraft", new VanillaCommandWrapper(new net.minecraft.command.server.CommandMessage(), "/tell <playername> <message>"));
         commandMap.register("minecraft", new VanillaCommandWrapper(new net.minecraft.command.server.CommandMessageRaw(), "/tellraw <playername> <raw message>"));
+        // CauldronX start - support UraniumPlus
+        commandMap.register("minecraft",new VanillaCommandWrapper(new cc.uraniummc.command.CommandTitle(),"/title <player> <title|subtitle|clear|reset|times> ..."));
+        // CauldronX end
         commandMap.register("minecraft", new VanillaCommandWrapper(new net.minecraft.command.server.CommandTestFor(), "/testfor <playername | selector> [dataTag]"));
         commandMap.register("minecraft", new VanillaCommandWrapper(new net.minecraft.command.server.CommandTestForBlock(), "/testforblock <x> <y> <z> <tilename> [datavalue] [dataTag]"));
         commandMap.register("minecraft", new VanillaCommandWrapper(new net.minecraft.command.CommandTime(), "/time set <value>\n/time add <value>"));

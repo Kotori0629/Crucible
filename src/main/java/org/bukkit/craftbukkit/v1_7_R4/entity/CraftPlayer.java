@@ -1,5 +1,7 @@
 package org.bukkit.craftbukkit.v1_7_R4.entity;
 
+import cc.uraniummc.UraniumPlusCommon;
+import cc.uraniummc.packet.S45PacketTitle;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.authlib.GameProfile;
 import io.github.crucible.CrucibleMetadata;
@@ -1384,22 +1386,35 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     // Spigot end
-    // Crucible start
 
+    // Uranium start
     @Override
     public void sendTitle(String title, String subtitle) {
-        throw new UnsupportedOperationException(CrucibleMetadata.NECRO_TEMPUS_REQUIRED);
+        sendTitle(title, subtitle, 10, 70, 20);
     }
 
     @Override
     public void sendTitle(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
-        throw new UnsupportedOperationException(CrucibleMetadata.NECRO_TEMPUS_REQUIRED);
+        if (title != null) {
+            S45PacketTitle packetTitle = new S45PacketTitle(S45PacketTitle.Type.TITLE, CraftChatMessage.fromString(title)[0]);
+            UraniumPlusCommon.getChancel().sendTo(packetTitle,getHandle());
+        }
+
+        if (subtitle != null) {
+            S45PacketTitle packetSubtitle = new S45PacketTitle(S45PacketTitle.Type.SUBTITLE, CraftChatMessage.fromString(subtitle)[0]);
+            UraniumPlusCommon.getChancel().sendTo(packetSubtitle,getHandle());
+        }
+
+        S45PacketTitle times = new S45PacketTitle(fadeIn, stay, fadeOut);
+        UraniumPlusCommon.getChancel().sendTo(times,getHandle());
     }
 
     @Override
     public void resetTitle() {
-        throw new UnsupportedOperationException(CrucibleMetadata.NECRO_TEMPUS_REQUIRED);
+        S45PacketTitle packetReset = new S45PacketTitle(S45PacketTitle.Type.RESET, null);
+        UraniumPlusCommon.getChancel().sendTo(packetReset,getHandle());
     }
+    // Uranium end
 
     @Override
     public void spawnParticle(Particle particle, Location location, int count) {

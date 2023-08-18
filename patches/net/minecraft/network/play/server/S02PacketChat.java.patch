@@ -10,16 +10,34 @@
  import net.minecraft.network.INetHandler;
  import net.minecraft.network.Packet;
  import net.minecraft.network.PacketBuffer;
-@@ -13,6 +16,8 @@
+@@ -13,11 +16,15 @@
  {
      private IChatComponent field_148919_a;
      private boolean field_148918_b;
 +    //Thermos start - Implement bungee chat api
 +    public BaseComponent[] components;
      private static final String __OBFID = "CL_00001289";
++    private byte type; // CauldronX - support UraniumPlus
  
      public S02PacketChat()
-@@ -39,7 +44,12 @@
+     {
+         this.field_148918_b = true;
++        this.type = 1;
+     }
+ 
+     public S02PacketChat(IChatComponent p_i45179_1_)
+@@ -32,6 +39,10 @@
+         this.field_148918_b = p_i45180_2_;
+     }
+ 
++    public byte getType() {
++        return type;
++    }
++
+     public void readPacketData(PacketBuffer p_148837_1_) throws IOException
+     {
+         this.field_148919_a = IChatComponent.Serializer.func_150699_a(p_148837_1_.readStringFromBuffer(32767));
+@@ -39,7 +50,12 @@
  
      public void writePacketData(PacketBuffer p_148840_1_) throws IOException
      {
