@@ -1,7 +1,5 @@
 package co.aikar.timings;
 
-import static co.aikar.timings.TimingsManager.*;
-
 import org.jetbrains.annotations.NotNull;
 
 public class FullServerTickHandler extends TimingHandler {
@@ -13,7 +11,7 @@ public class FullServerTickHandler extends TimingHandler {
         super(IDENTITY);
         minuteData = new TimingData(id);
 
-        TIMING_MAP.put(IDENTITY, this);
+        co.aikar.timings.TimingsManager.TIMING_MAP.put(IDENTITY, this);
     }
 
     @NotNull
@@ -53,7 +51,7 @@ public class FullServerTickHandler extends TimingHandler {
         long start = System.nanoTime();
         TimingsManager.tick();
         long diff = System.nanoTime() - start;
-        TIMINGS_TICK.addDiff(diff, null);
+        co.aikar.timings.TimingsManager.TIMINGS_TICK.addDiff(diff, null);
         // addDiff for TIMINGS_TICK incremented this, bring it back down to 1 per tick.
         record.setCurTickCount(record.getCurTickCount()-1);
 
@@ -62,12 +60,12 @@ public class FullServerTickHandler extends TimingHandler {
 
         boolean violated = isViolated();
         minuteData.processTick(violated);
-        TIMINGS_TICK.processTick(violated);
+        co.aikar.timings.TimingsManager.TIMINGS_TICK.processTick(violated);
         processTick(violated);
 
 
         if (TimingHistory.timedTicks % 1200 == 0) {
-            MINUTE_REPORTS.add(new TimingHistory.MinuteReport());
+            co.aikar.timings.TimingsManager.MINUTE_REPORTS.add(new TimingHistory.MinuteReport());
             TimingHistory.resetTicks(false);
             minuteData.reset();
         }
