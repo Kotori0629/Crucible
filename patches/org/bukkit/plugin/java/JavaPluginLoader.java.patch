@@ -101,7 +101,14 @@
  
          return loader.plugin;
      }
-@@ -184,9 +186,7 @@
+@@ -178,15 +180,13 @@
+         return fileFilters.clone();
+     }
+ 
+-    Class<?> getClassByName(final String name) {
++    public Class<?> getClassByName(final String name) {
+         Class<?> cachedClass = classes.get(name);
+ 
          if (cachedClass != null) {
              return cachedClass;
          } else {

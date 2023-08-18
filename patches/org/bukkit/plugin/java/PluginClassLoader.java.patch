@@ -1,6 +1,6 @@
 --- ../src-base/minecraft/org/bukkit/plugin/java/PluginClassLoader.java
 +++ ../src-work/minecraft/org/bukkit/plugin/java/PluginClassLoader.java
-@@ -1,31 +1,59 @@
+@@ -1,31 +1,62 @@
  package org.bukkit.plugin.java;
  
  import java.io.File;
@@ -40,6 +40,9 @@
   */
 -final class PluginClassLoader extends URLClassLoader {
 +public /* CatServer - protected -> public */ final class PluginClassLoader extends URLClassLoader {
++    public JavaPlugin getPlugin() {
++        return plugin;
++    }
      private final JavaPluginLoader loader;
      private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
      private final PluginDescriptionFile description;
@@ -62,7 +65,7 @@
          super(new URL[] {file.toURI().toURL()}, parent);
          Validate.notNull(loader, "Loader cannot be null");
  
-@@ -33,7 +61,18 @@
+@@ -33,7 +64,18 @@
          this.description = description;
          this.dataFolder = dataFolder;
          this.file = file;
@@ -81,7 +84,7 @@
          try {
              Class<?> jarClass;
              try {
-@@ -63,30 +102,59 @@
+@@ -63,30 +105,59 @@
      }
  
      Class<?> findClass(String name, boolean checkGlobal) throws ClassNotFoundException {
@@ -153,7 +156,7 @@
      Set<String> getClasses() {
          return classes.keySet();
      }
-@@ -103,4 +171,90 @@
+@@ -103,4 +174,90 @@
  
          javaPlugin.init(loader, loader.server, description, dataFolder, file, this);
      }
