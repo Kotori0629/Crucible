@@ -20,6 +20,9 @@ Advantages over Thermos:
 + TimingsV2 implemented
 + You can see more changes in the [releases](https://github.com/CrucibleMC/Crucible/releases) changelog.
 
+Advantages with other Crucible:
++ Use CatServerRemapper, Enhanced plugin compatibility
+
 ## Build Requirements
 * Java 8 JDK
 * `JAVA_HOME` defined on your OS
