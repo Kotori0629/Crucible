@@ -52,7 +52,7 @@
  import org.apache.commons.lang3.Validate;
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
-@@ -79,19 +87,52 @@
+@@ -79,19 +87,53 @@
  import net.minecraftforge.common.DimensionManager;
  import net.minecraftforge.common.MinecraftForge;
  import net.minecraftforge.event.world.WorldEvent;
@@ -71,6 +71,7 @@
 +import org.bukkit.craftbukkit.v1_7_R4.scoreboard.CraftScoreboardManager;
 +import org.bukkit.event.server.RemoteServerCommandEvent;
 +import org.bukkit.event.world.WorldSaveEvent;
++import org.fusesource.jansi.AnsiConsole;
 +import org.spigotmc.WatchdogThread;
 +
 +// CraftBukkit end
@@ -108,7 +109,7 @@
      private final ServerStatusResponse field_147147_p = new ServerStatusResponse();
      private final Random field_147146_q = new Random();
      @SideOnly(Side.SERVER)
-@@ -135,8 +176,42 @@
+@@ -135,8 +177,42 @@
      private long field_147142_T = 0L;
      private final GameProfileRepository field_152365_W;
      private final PlayerProfileCache field_152366_X;
@@ -151,7 +152,7 @@
      public MinecraftServer(File p_i45281_1_, Proxy p_i45281_2_)
      {
          this.field_152366_X = new PlayerProfileCache(this, field_152367_a);
-@@ -149,10 +224,74 @@
+@@ -149,10 +225,74 @@
          this.field_152364_T = new YggdrasilAuthenticationService(p_i45281_2_, UUID.randomUUID().toString());
          this.field_147143_S = this.field_152364_T.createMinecraftSessionService();
          this.field_152365_W = this.field_152364_T.createProfileRepository();
@@ -227,7 +228,7 @@
      protected void convertMapIfNeeded(String p_71237_1_)
      {
          if (this.getActiveAnvilConverter().isOldMapFormat(p_71237_1_))
-@@ -172,6 +311,7 @@
+@@ -172,6 +312,7 @@
                          MinecraftServer.logger.info("Converting... " + p_73718_1_ + "%");
                      }
                  }
@@ -235,7 +236,7 @@
                  @SideOnly(Side.CLIENT)
                  public void resetProgressAndMessage(String p_73721_1_) {}
                  @SideOnly(Side.CLIENT)
-@@ -195,10 +335,17 @@
+@@ -195,10 +336,17 @@
  
      protected void loadAllWorlds(String p_71247_1_, String p_71247_2_, long p_71247_3_, WorldType p_71247_5_, String p_71247_6_)
      {
@@ -255,7 +256,7 @@
          WorldSettings worldsettings;
  
          if (worldinfo == null)
-@@ -215,11 +362,79 @@
+@@ -215,11 +363,79 @@
          {
              worldsettings.enableBonusChest();
          }
@@ -338,7 +339,7 @@
              world.addWorldAccess(new WorldManager(this, world));
  
              if (!this.isSinglePlayer())
-@@ -227,12 +442,14 @@
+@@ -227,12 +443,14 @@
                  world.getWorldInfo().setGameType(this.getGameType());
              }
  
@@ -356,7 +357,7 @@
      }
  
      protected void initialWorldChunkLoad()
-@@ -244,9 +461,12 @@
+@@ -244,9 +462,12 @@
          int i = 0;
          this.setUserMessage("menu.generatingTerrain");
          byte b0 = 0;
@@ -369,7 +370,7 @@
          long j = getSystemTimeMillis();
  
          for (int k = -192; k <= 192 && this.isServerRunning(); k += 16)
-@@ -265,7 +485,8 @@
+@@ -265,7 +486,8 @@
                  worldserver.theChunkProviderServer.loadChunk(chunkcoordinates.posX + k >> 4, chunkcoordinates.posZ + l >> 4);
              }
          }
@@ -379,7 +380,7 @@
          this.clearCurrentTask();
      }
  
-@@ -292,46 +513,68 @@
+@@ -292,46 +514,68 @@
      {
          this.currentTask = null;
          this.percentDone = 0;
@@ -460,7 +461,7 @@
              if (this.func_147137_ag() != null)
              {
                  this.func_147137_ag().terminateEndpoints();
-@@ -347,7 +590,14 @@
+@@ -347,7 +591,14 @@
              if (this.worldServers != null)
              {
                  logger.info("Saving worlds");
@@ -476,7 +477,7 @@
  
                  for (int i = 0; i < this.worldServers.length; ++i)
                  {
-@@ -380,6 +630,13 @@
+@@ -380,6 +631,13 @@
          this.serverRunning = false;
      }
  
@@ -490,7 +491,7 @@
      public void run()
      {
          try
-@@ -392,45 +649,56 @@
+@@ -392,45 +650,56 @@
                  this.field_147147_p.func_151315_a(new ChatComponentText(this.motd));
                  this.field_147147_p.func_151321_a(new ServerStatusResponse.MinecraftProtocolVersionIdentifier("1.7.10", 5));
                  this.func_147138_a(this.field_147147_p);
@@ -574,7 +575,7 @@
                  FMLCommonHandler.instance().handleServerStopping();
                  FMLCommonHandler.instance().expectServerStopped(); // has to come before finalTick to avoid race conditions
              }
-@@ -448,6 +716,14 @@
+@@ -448,6 +717,14 @@
          catch (Throwable throwable1)
          {
              logger.error("Encountered an unexpected exception", throwable1);
@@ -589,7 +590,7 @@
              CrashReport crashreport = null;
  
              if (throwable1 instanceof ReportedException)
-@@ -477,6 +753,7 @@
+@@ -477,6 +754,7 @@
          {
              try
              {
@@ -597,7 +598,7 @@
                  this.stopServer();
                  this.serverStopped = true;
              }
-@@ -486,6 +763,16 @@
+@@ -486,6 +764,16 @@
              }
              finally
              {
@@ -614,7 +615,7 @@
                  FMLCommonHandler.instance().handleServerStopped();
                  this.serverStopped = true;
                  this.systemExitNow();
-@@ -532,8 +819,14 @@
+@@ -532,8 +820,14 @@
  
      public void tick()
      {
@@ -629,7 +630,7 @@
          ++this.tickCounter;
  
          if (this.startProfiling)
-@@ -562,11 +855,18 @@
+@@ -562,11 +856,18 @@
              this.field_147147_p.func_151318_b().func_151330_a(agameprofile);
          }
  
@@ -650,7 +651,7 @@
              this.theProfiler.endSection();
          }
  
-@@ -575,25 +875,58 @@
+@@ -575,25 +876,58 @@
          this.theProfiler.endSection();
          this.theProfiler.startSection("snooper");
  
@@ -711,7 +712,7 @@
          int i;
  
          Integer[] ids = DimensionManager.getIDs(this.tickCounter % 200 == 0);
-@@ -602,19 +935,21 @@
+@@ -602,19 +936,21 @@
              int id = ids[x];
              long j = System.nanoTime();
  
@@ -736,7 +737,7 @@
  
                  this.theProfiler.startSection("tick");
                  FMLCommonHandler.instance().onPreWorldTick(worldserver);
-@@ -622,22 +957,46 @@
+@@ -622,22 +958,46 @@
  
                  try
                  {
@@ -785,7 +786,7 @@
                      worldserver.addWorldInfoToCrashReport(crashreport);
                      throw new ReportedException(crashreport);
                  }
-@@ -645,10 +1004,12 @@
+@@ -645,10 +1005,12 @@
                  FMLCommonHandler.instance().onPostWorldTick(worldserver);
                  this.theProfiler.endSection();
                  this.theProfiler.startSection("tracker");
@@ -799,7 +800,7 @@
  
              worldTickTimes.get(id)[this.tickCounter % 100] = System.nanoTime() - j;
          }
-@@ -656,15 +1017,21 @@
+@@ -656,15 +1018,21 @@
          this.theProfiler.endStartSection("dim_unloading");
          DimensionManager.unloadWorlds(worldTickTimes);
          this.theProfiler.endStartSection("connection");
@@ -821,7 +822,7 @@
  
          this.theProfiler.endSection();
      }
-@@ -699,6 +1066,13 @@
+@@ -699,6 +1067,13 @@
  
      public WorldServer worldServerForDimension(int p_71218_1_)
      {
@@ -835,7 +836,7 @@
          WorldServer ret = DimensionManager.getWorld(p_71218_1_);
          if (ret == null)
          {
-@@ -784,13 +1158,14 @@
+@@ -784,13 +1159,14 @@
  
      public List getPossibleCompletions(ICommandSender p_71248_1_, String p_71248_2_)
      {
@@ -854,7 +855,7 @@
  
              if (list != null)
              {
-@@ -798,40 +1173,25 @@
+@@ -798,40 +1174,25 @@
  
                  while (iterator.hasNext())
                  {
@@ -903,7 +904,7 @@
      }
  
      public static MinecraftServer getServer()
-@@ -1034,7 +1394,7 @@
+@@ -1034,7 +1395,7 @@
  
      public boolean isServerInOnlineMode()
      {
@@ -912,7 +913,7 @@
      }
  
      public void setOnlineMode(boolean p_71229_1_)
-@@ -1124,7 +1484,7 @@
+@@ -1124,7 +1485,7 @@
  
      public NetworkSystem func_147137_ag()
      {
@@ -921,7 +922,7 @@
      }
  
      @SideOnly(Side.CLIENT)
-@@ -1257,10 +1617,14 @@
+@@ -1257,10 +1618,14 @@
      @SideOnly(Side.SERVER)
      public static void main(String[] p_main_0_)
      {
@@ -936,7 +937,7 @@
              boolean flag = true;
              String s = null;
              String s1 = ".";
-@@ -1356,16 +1720,34 @@
+@@ -1356,16 +1721,34 @@
              {
                  dedicatedserver.setGuiEnabled();
              }
@@ -977,7 +978,7 @@
          }
          catch (Exception exception)
          {
-@@ -1400,15 +1782,70 @@
+@@ -1400,15 +1783,70 @@
      @SideOnly(Side.SERVER)
      public String getPlugins()
      {
@@ -1053,7 +1054,7 @@
      }
  
      @SideOnly(Side.SERVER)
-@@ -1455,9 +1892,213 @@
+@@ -1455,9 +1893,215 @@
          return this.serverStopped;
      }
  
@@ -1187,6 +1188,8 @@
 +                if (!useJline) {
 +                    // This ensures the terminal literal will always match the jline implementation
 +                    System.setProperty(jline.TerminalFactory.JLINE_TERMINAL, jline.UnsupportedTerminal.class.getName());
++                } else {
++                    AnsiConsole.systemInstall(); // install Windows JNI library
 +                }
 +
 +
