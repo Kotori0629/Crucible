@@ -1,176 +1,166 @@
 --- ../src-base/minecraft/org/bukkit/plugin/java/JavaPluginLoader.java
 +++ ../src-work/minecraft/org/bukkit/plugin/java/JavaPluginLoader.java
-@@ -1,5 +1,15 @@
- package org.bukkit.plugin.java;
- 
-+// Cauldron start
-+import java.io.BufferedReader;
-+import java.io.InputStreamReader;
-+import com.google.common.collect.BiMap;
-+import com.google.common.collect.HashBiMap;
-+import net.md_5.specialsource.InheritanceMap;
-+import net.md_5.specialsource.JarMapping;
-+import net.md_5.specialsource.transformer.MavenShade;
-+// Cauldron end
-+
- import java.io.File;
- import java.io.FileNotFoundException;
- import java.io.IOException;
-@@ -10,6 +20,7 @@
+@@ -9,9 +9,10 @@
+ import java.util.Arrays;
  import java.util.HashMap;
  import java.util.HashSet;
- import java.util.LinkedHashMap;
+-import java.util.LinkedHashMap;
 +import java.util.List;
  import java.util.Map;
  import java.util.Set;
++import java.util.concurrent.CopyOnWriteArrayList;
  import java.util.jar.JarEntry;
-@@ -39,8 +50,11 @@
+ import java.util.jar.JarFile;
+ import java.util.logging.Level;
+@@ -39,6 +40,7 @@
  import org.bukkit.plugin.RegisteredListener;
  import org.bukkit.plugin.TimedRegisteredListener;
  import org.bukkit.plugin.UnknownDependencyException;
 +import org.spigotmc.CustomTimingsHandler; // Spigot
  import org.yaml.snakeyaml.error.YAMLException;
  
-+import com.google.common.collect.ImmutableList;
-+
  /**
-  * Represents a Java plugin loader, allowing plugins in the form of .jar
-  */
-@@ -59,43 +73,41 @@
-         server = instance;
-     }
+@@ -47,11 +49,14 @@
+ public final class JavaPluginLoader implements PluginLoader {
+     final Server server;
+     private final Pattern[] fileFilters = new Pattern[] { Pattern.compile("\\.jar$"), };
+-    private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
+-    private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
++    private final Map<String, Class<?>> classes = new java.util.concurrent.ConcurrentHashMap<String, Class<?>>(); // Spigot
++    private final List<PluginClassLoader> loaders = new CopyOnWriteArrayList<PluginClassLoader>();
++    public static final CustomTimingsHandler pluginParentTimer = new CustomTimingsHandler("** Plugins"); // Spigot
  
--    public Plugin loadPlugin(final File file) throws InvalidPluginException {
-+    public Plugin loadPlugin(File file) throws InvalidPluginException {
-         Validate.notNull(file, "File cannot be null");
- 
-         if (!file.exists()) {
-             throw new InvalidPluginException(new FileNotFoundException(file.getPath() + " does not exist"));
-         }
- 
--        final PluginDescriptionFile description;
-+        PluginDescriptionFile description;
-         try {
-             description = getPluginDescription(file);
-         } catch (InvalidDescriptionException ex) {
-             throw new InvalidPluginException(ex);
-         }
- 
--        final File parentFile = file.getParentFile();
--        final File dataFolder = new File(parentFile, description.getName());
--        @SuppressWarnings("deprecation")
--        final File oldDataFolder = new File(parentFile, description.getRawName());
-+        File dataFolder = new File(file.getParentFile(), description.getName());
-+        File oldDataFolder = getDataFolder(file);
- 
-         // Found old data folder
-         if (dataFolder.equals(oldDataFolder)) {
+     /**
+      * This class was not meant to be constructed explicitly
++     *
++     * @param instance the server instance
+      */
+     @Deprecated
+     public JavaPluginLoader(Server instance) {
+@@ -83,39 +88,36 @@
              // They are equal -- nothing needs to be done!
          } else if (dataFolder.isDirectory() && oldDataFolder.isDirectory()) {
--            server.getLogger().warning(String.format(
+             server.getLogger().warning(String.format(
 -                "While loading %s (%s) found old-data folder: `%s' next to the new one `%s'",
 -                description.getFullName(),
-+            server.getLogger().log(Level.INFO, String.format(
-+                "While loading %s (%s) found old-data folder: %s next to the new one: %s",
-+                description.getName(),
-                 file,
-                 oldDataFolder,
-                 dataFolder
+-                file,
+-                oldDataFolder,
+-                dataFolder
++                    "While loading %s (%s) found old-data folder: `%s' next to the new one `%s'",
++                    description.getFullName(),
++                    file,
++                    oldDataFolder,
++                    dataFolder
              ));
          } else if (oldDataFolder.isDirectory() && !dataFolder.exists()) {
              if (!oldDataFolder.renameTo(dataFolder)) {
--                throw new InvalidPluginException("Unable to rename old data folder: `" + oldDataFolder + "' to: `" + dataFolder + "'");
-+                throw new InvalidPluginException("Unable to rename old data folder: '" + oldDataFolder + "' to: '" + dataFolder + "'");
+                 throw new InvalidPluginException("Unable to rename old data folder: `" + oldDataFolder + "' to: `" + dataFolder + "'");
              }
              server.getLogger().log(Level.INFO, String.format(
 -                "While loading %s (%s) renamed data folder: `%s' to `%s'",
 -                description.getFullName(),
-+                "While loading %s (%s) renamed data folder: '%s' to '%s'",
-+                description.getName(),
-                 file,
-                 oldDataFolder,
-                 dataFolder
-@@ -104,14 +116,19 @@
+-                file,
+-                oldDataFolder,
+-                dataFolder
++                    "While loading %s (%s) renamed data folder: `%s' to `%s'",
++                    description.getFullName(),
++                    file,
++                    oldDataFolder,
++                    dataFolder
+             ));
+         }
  
          if (dataFolder.exists() && !dataFolder.isDirectory()) {
              throw new InvalidPluginException(String.format(
 -                "Projected datafolder: `%s' for %s (%s) exists and is not a directory",
-+                "Projected datafolder: '%s' for %s (%s) exists and is not a directory",
-                 dataFolder,
+-                dataFolder,
 -                description.getFullName(),
-+                description.getName(),
-                 file
+-                file
++                    "Projected datafolder: `%s' for %s (%s) exists and is not a directory",
++                    dataFolder,
++                    description.getFullName(),
++                    file
              ));
          }
  
--        for (final String pluginName : description.getDepend()) {
-+        List<String> depend = description.getDepend();
-+        if (depend == null) {
-+            depend = ImmutableList.<String>of();
-+        }
-+
-+        for (String pluginName : depend) {
-             if (loaders == null) {
+         for (final String pluginName : description.getDepend()) {
+-            if (loaders == null) {
+-                throw new UnknownDependencyException(pluginName);
+-            }
+-            PluginClassLoader current = loaders.get(pluginName);
++            Plugin current = server.getPluginManager().getPlugin(pluginName);
+ 
+             if (current == null) {
                  throw new UnknownDependencyException(pluginName);
-             }
-@@ -122,7 +139,7 @@
-             }
+@@ -131,7 +133,7 @@
+             throw new InvalidPluginException(ex);
          }
  
--        final PluginClassLoader loader;
-+        PluginClassLoader loader;
-         try {
-             loader = new PluginClassLoader(this, getClass().getClassLoader(), description, dataFolder, file);
-         } catch (InvalidPluginException ex) {
-@@ -136,6 +153,26 @@
+-        loaders.put(description.getName(), loader);
++        loaders.add(loader);
+ 
          return loader.plugin;
      }
- 
-+    private File getDataFolder(File file) {
-+        File dataFolder = null;
-+
-+        String filename = file.getName();
-+        int index = file.getName().lastIndexOf(".");
-+
-+        if (index != -1) {
-+            String name = filename.substring(0, index);
-+
-+            dataFolder = new File(file.getParentFile(), name);
-+        } else {
-+            // This is if there is no extension, which should not happen
-+            // Using _ to prevent name collision
-+
-+            dataFolder = new File(file.getParentFile(), filename + "_");
-+        }
-+
-+        return dataFolder;
-+    }
-+
-     public PluginDescriptionFile getPluginDescription(File file) throws InvalidDescriptionException {
-         Validate.notNull(file, "File cannot be null");
- 
-@@ -178,7 +215,7 @@
-         return fileFilters.clone();
-     }
- 
--    Class<?> getClassByName(final String name) {
-+    public Class<?> getClassByName(final String name) {
-         Class<?> cachedClass = classes.get(name);
- 
+@@ -184,9 +186,7 @@
          if (cachedClass != null) {
-@@ -283,8 +320,9 @@
+             return cachedClass;
+         } else {
+-            for (String current : loaders.keySet()) {
+-                PluginClassLoader loader = loaders.get(current);
+-
++            for (PluginClassLoader loader : loaders) {
+                 try {
+                     cachedClass = loader.findClass(name, false);
+                 } catch (ClassNotFoundException cnfe) {}
+@@ -232,11 +232,12 @@
+         Set<Method> methods;
+         try {
+             Method[] publicMethods = listener.getClass().getMethods();
+-            methods = new HashSet<Method>(publicMethods.length, Float.MAX_VALUE);
++            Method[] privateMethods = listener.getClass().getDeclaredMethods();
++            methods = new HashSet<Method>(publicMethods.length + privateMethods.length, 1.0f);
+             for (Method method : publicMethods) {
+                 methods.add(method);
+             }
+-            for (Method method : listener.getClass().getDeclaredMethods()) {
++            for (Method method : privateMethods) {
+                 methods.add(method);
+             }
+         } catch (NoClassDefFoundError e) {
+@@ -247,6 +248,11 @@
+         for (final Method method : methods) {
+             final EventHandler eh = method.getAnnotation(EventHandler.class);
+             if (eh == null) continue;
++            // Do not register bridge or synthetic methods to avoid event duplication
++            // Fixes SPIGOT-893
++            if (method.isBridge() || method.isSynthetic()) {
++                continue;
++            }
+             final Class<?> checkClass;
+             if (method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom(checkClass = method.getParameterTypes()[0])) {
+                 plugin.getLogger().severe(plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass());
+@@ -272,7 +278,7 @@
+                             Level.WARNING,
+                             String.format(
+                                     "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." +
+-                                    " \"%s\"; please notify the authors %s.",
++                                            " \"%s\"; please notify the authors %s.",
+                                     plugin.getDescription().getFullName(),
+                                     clazz.getName(),
+                                     method.toGenericString(),
+@@ -283,8 +289,9 @@
                  }
              }
  
 -            EventExecutor executor = new EventExecutor() {
 -                public void execute(Listener listener, Event event) throws EventException {
-+
++            final CustomTimingsHandler timings = new CustomTimingsHandler("Plugin: " + plugin.getDescription().getFullName() + " Event: " + listener.getClass().getName() + "::" + method.getName()+"("+eventClass.getSimpleName()+")", pluginParentTimer); // Spigot
 +            EventExecutor executor = new co.aikar.timings.TimedEventExecutor(new EventExecutor() { // Paper
 +                public void execute(Listener listener, Event event) throws EventException { // Paper
                      try {
                          if (!eventClass.isAssignableFrom(event.getClass())) {
                              return;
-@@ -296,8 +334,8 @@
+@@ -296,8 +303,8 @@
                          throw new EventException(t);
                      }
                  }
@@ -181,48 +171,45 @@
                  eventSet.add(new TimedRegisteredListener(listener, executor, eh.priority(), plugin, eh.ignoreCancelled()));
              } else {
                  eventSet.add(new RegisteredListener(listener, executor, eh.priority(), plugin, eh.ignoreCancelled()));
-@@ -362,4 +400,44 @@
+@@ -314,10 +321,11 @@
+ 
+             JavaPlugin jPlugin = (JavaPlugin) plugin;
+ 
+-            String pluginName = jPlugin.getDescription().getName();
++            PluginClassLoader pluginLoader = (PluginClassLoader) jPlugin.getClassLoader();
+ 
+-            if (!loaders.containsKey(pluginName)) {
+-                loaders.put(pluginName, (PluginClassLoader) jPlugin.getClassLoader());
++            if (!loaders.contains(pluginLoader)) {
++                loaders.add(pluginLoader);
++                server.getLogger().log(Level.WARNING, "Enabled plugin with unregistered PluginClassLoader " + plugin.getDescription().getFullName());
+             }
+ 
+             try {
+@@ -350,15 +358,24 @@
+                 server.getLogger().log(Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex);
+             }
+ 
+-            loaders.remove(jPlugin.getDescription().getName());
+-
+             if (cloader instanceof PluginClassLoader) {
+                 PluginClassLoader loader = (PluginClassLoader) cloader;
++                loaders.remove(loader);
++
+                 Set<String> names = loader.getClasses();
+ 
+                 for (String name : names) {
+                     removeClass(name);
+                 }
++                if (net.minecraft.server.MinecraftServer.getServer().isServerStopped()) return; // CatServer - Prevent shutdown hooks error
++                // Paper start - close Class Loader on disable
++                try {
++                    loader.close();
++                } catch (IOException e) {
++                    server.getLogger().log(Level.WARNING, "Error closing the Plugin Class Loader for " + plugin.getDescription().getFullName());
++                    e.printStackTrace();
++                }
++                // Paper end
              }
          }
      }
-+
-+    // Cauldron start
-+    private InheritanceMap globalInheritanceMap = null;
-+
-+    /**
-+     * Get the inheritance map for remapping all plugins
-+     */
-+    public InheritanceMap getGlobalInheritanceMap() {
-+        if (globalInheritanceMap == null) {
-+            Map<String, String> relocationsCurrent = new HashMap<String, String>();
-+            relocationsCurrent.put("net.minecraft.server", "net.minecraft.server."+PluginClassLoader.getNativeVersion());
-+            JarMapping currentMappings = new JarMapping();
-+
-+            try {
-+                currentMappings.loadMappings(
-+                        new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("mappings/"+PluginClassLoader.getNativeVersion()+"/cb2numpkg.srg"))),
-+                        new MavenShade(relocationsCurrent),
-+                        null, false);
-+            } catch (IOException ex) {
-+                ex.printStackTrace();
-+                throw new RuntimeException(ex);
-+            }
-+
-+            BiMap<String, String> inverseClassMap = HashBiMap.create(currentMappings.classes).inverse();
-+            globalInheritanceMap = new InheritanceMap();
-+
-+            BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("mappings/"+PluginClassLoader.getNativeVersion()+"/nms.inheritmap")));
-+
-+            try {
-+                globalInheritanceMap.load(reader, inverseClassMap);
-+            } catch (IOException ex) {
-+                ex.printStackTrace();
-+                throw new RuntimeException(ex);
-+            }
-+            System.out.println("Loaded inheritance map of "+globalInheritanceMap.size()+" classes");
-+        }
-+
-+        return globalInheritanceMap;
-+    }
-+    // Cauldron end
- }
